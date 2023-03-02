@@ -19,3 +19,16 @@ check_support_polygon(q, x, y): 指定された足の位置 x,y が、ロボッ�
 
 
 '''
+class BipedKinematics(BipedModel):
+    def __init__(self, mass, height, foot_length, foot_width):
+        super().__init__(mass, height, foot_length, foot_width)
+
+    def forward_kinematics(self, hip_angle, knee_angle, ankle_angle):
+        # Implementation of forward kinematics equations
+        # ...
+        return foot_position, joint_positions
+
+    def inverse_kinematics(self, foot_position):
+        # Implementation of inverse kinematics equations
+        # ...
+        return hip_angle, knee_angle, ankle_angle
