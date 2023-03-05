@@ -5,11 +5,11 @@ SAMPLING_TIME = 1e-5  # second
 
 
 class BLDCMotor:
-    def __init__(self, name, motor_voltage, resistance, inductance, inertia, damping,
+    def __init__(self, id, motor_voltage, resistance, inductance, inertia, damping,
                   kt, 
                   kp=1.0, kd=0.0,
                  max_current=10.0, max_rpm=1e+5):
-        self.__name = name
+        self.__id = id
         # TODO self.__max_rpm = max_rpm
         self.__motor_voltage = motor_voltage
         self._max_current = max_current
@@ -56,8 +56,8 @@ class BLDCMotor:
         pass
 
     @property
-    def name(self):
-        return self.__name
+    def id(self):
+        return self.__id
 
     @property
     def motor_voltage(self):
@@ -125,8 +125,8 @@ if __name__ == '__main__':
     kt = 5.04*1e-3          #Nm / A
     
     #set control params
-    kp = 1.0
-    kd = 0.00
+    kp = 0.5
+    kd = 0.001
 
     bldc = BLDCMotor("motor1", 10, resistance, inductance, J, damping, kt, kp, kd)
 

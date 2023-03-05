@@ -28,8 +28,12 @@ set_max_joint_angle()：ロボットの股関節の角度を設定します。�
 
 import pybullet as p
 
+
+
 class BipedModel:
     def __init__(self, robot_id):
+        self._motor_list = []
+
 
         
 
@@ -48,7 +52,7 @@ class BipedModel:
             if (jointType == p.JOINT_PRISMATIC or jointType == p.JOINT_REVOLUTE):
                 self.__joint_ids.append(j)
                 self.__param_ids.append(p.addUserDebugParameter(jointName.decode("utf-8"), jointLowerLimit, jointUpperLimit, 0))
-                print(jointName.decode("utf-8"))
+                print("joint ID : {}, Name : {}".format(j, jointName.decode("utf-8")))
 
     @property
     def robot_id(self):
@@ -99,35 +103,55 @@ class BipedModel:
         return self._joint_limits
 '''
 
-import pybullet_data
+class JointModel:
+    def __init__(self, body_id, joint_name, max_force, kp, kd):
+        self._body_id = body_id
+        self._joint_index = p.getJointInfo(self._body_id, joint_name)[0]
+        self._max_force = max_force
+        self._kp = kp
+        self._kd = kd
+
+    def set_torque(self, torque):
+        p.setJointMotorControl2(bodyIndex=self._body_id,
+                                jointIndex=self._joint_index,
+                                controlMode=p.TORQUE_CONTROL,
+                                force=torque)#, positionGain=0.0, velocityGain=0.0)
+
+
+
+
 
 if __name__ == '__main__':
+    import pybullet_data
+    import time 
+    import os
+ 
+    print("join(): " + os.path.join(os.path.abspath(os.path.dirname(__file__)), "*.urdf"))
 
-    p.connect(p.GUI)  # Connect to the PyBullet physics server
-
-    print("This will always execute")
-    p.setAdditionalSearchPath(pybullet_data.getDataPath())  # optionally
-
+    # Connect to the PyBullet physics server
+    p.connect(p.GUI)  
     useFixedBase = True
     flags = p.URDF_INITIALIZE_SAT_FEATURES
-
     ground_pos = [0,0,-0.625]
     ground = p.loadURDF("../../world/ground.urdf", ground_pos, flags = flags, useFixedBase=useFixedBase)
     robot_pos = [0,0,0.5]
     robot_id = p.loadURDF("../../models/simplebot_v10/model.urdf", robot_pos)
-
-    model = BipedModel(robot_id)
-    p.setPhysicsEngineParameter(numSolverIterations=10)
-    p.changeDynamics(model.robot_id, -1, linearDamping=0, angularDamping=0)
-
-
     p.setGravity(0, 0,-0.1)  # Set the gravity to -9.81 m/s^2 in the z-direction
     p.setTimeStep(1.0/240.0)   # Set the time step to 1/240 seconds
     p.setRealTimeSimulation(1)
+    p.setPhysicsEngineParameter(numSolverIterations=10)
+    model = BipedModel(robot_id)
+    p.changeDynamics(model.robot_id, -1, linearDamping=0, angularDamping=0)
+
+    # Set the torque of the left motor to 1 N-m
+    left_motor_id = 0  # Replace with the actual ID of the left motor joint
+    torque = 1.0
+    p.setJointMotorControl2(model.robot_id, left_motor_id, p.TORQUE_CONTROL, force=torque)
         
     while p.isConnected():
         p.stepSimulation()
         pos, orn = p.getBasePositionAndOrientation(model.robot_id)  # Get the position and orientation of the robot's base link
+
         for i in range(len(model.param_ids)):
             c = model.param_ids[i]
             targetPos = p.readUserDebugParameter(c)
@@ -136,4 +160,5 @@ if __name__ == '__main__':
         print("Robot position:",  )
         print("Robot orientation:", orn)'''
     
-
+        time.sleep(1./240.)
+    p.disconnect()
