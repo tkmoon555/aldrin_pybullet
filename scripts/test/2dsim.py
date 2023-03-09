@@ -1,164 +1,163 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib.animation as animation
+from math import sin,cos
 
+def dh_to_matrix(dh_param):
+    """
+    Convert DH parameters to a homogeneous transformation matrix.
+    """
+    a, alpha, d, theta = dh_param
+    cos_theta = np.cos(theta)
+    sin_theta = np.sin(theta)
+    cos_alpha = np.cos(alpha)
+    sin_alpha = np.sin(alpha)
 
-l1 = 1
-l2 = 2
+    Ti = np.array([
+        [cos_theta, -sin_theta, 0, a],
+        [cos_alpha*sin_theta, cos_alpha*cos_theta, -sin_alpha, -d * sin_alpha],
+        [sin_alpha*sin_theta, sin_alpha*cos_theta, cos_alpha, d*cos_alpha],
+        [0, 0, 0, 1]
+    ])
 
+    return Ti
 
-L = np.array([[l1, l2]]).T
-
-J2_1 = np.array([[1,1]]).T # 2x1 all-ones matrix
-count  = 0
-
-fig = plt.figure(figsize=(12,4))
-
-ax1 = fig.add_subplot(2, 2, 1)
-ax1.grid()
-ax2 = fig.add_subplot(2, 2, 2)
-ax2.grid()
-ax3 = fig.add_subplot(2, 2, 3)
-ax3.grid()
-ax4 = fig.add_subplot(2, 2, 4)
-ax4.grid()
-
-cm = plt.get_cmap('Spectral')
-ax2_xdata=[]
-ax2_ydata=[]
-ax3_xdata=[]
-ax3_ydata=[]
-ax4_xdata=[]
-ax4_ydata=[]
-
-def forward_Mat(Q):
-    q1 = Q[0][0]
-    q2 = Q[1][0]
-    M = np.array([[np.cos(q1), np.cos((q1+q2))],
-                  [np.sin(q1), np.sin((q1+q2))]])
-    return M
-
-def Jacobian(Q):
-    q1 = Q[0,0]
-    q2 = Q[1,0]
-    J = np.array([[(-l1*np.sin(q1))-(l2*np.sin(q1 + q2)),-l2*np.sin(q1 + q2)],
-                  [(l1*np.cos(q1))+(l2*np.cos(q1 + q2)), l2*np.cos(q1 + q2)]])
+def jacobi_matrix(thetas, lengths):
+    l1 , l2, l3 = lengths
+    q1, q2, q3 = thetas
+    J = np.array([
+        [1.0*l2*sin(q2)*cos(q1) + 1.0*l3*sin(q2)*cos(q1)*cos(q3) + 1.0*l3*sin(q3)*cos(q1)*cos(q2), 1.0*l2*sin(q1)*cos(q2) - 1.0*l3*sin(q1)*sin(q2)*sin(q3) + 1.0*l3*sin(q1)*cos(q2)*cos(q3), 0], 
+        [1.0*l2*sin(q1)*sin(q2) + 1.0*l3*sin(q1)*sin(q2)*cos(q3) + 1.0*l3*sin(q1)*sin(q3)*cos(q2), -1.0*l2*cos(q1)*cos(q2) + 1.0*l3*sin(q2)*sin(q3)*cos(q1) - 1.0*l3*cos(q1)*cos(q2)*cos(q3), 0], 
+        [0, -1.0*l2*sin(q2) - 1.0*l3*sin(q2)*cos(q3) - 1.0*l3*sin(q3)*cos(q2), 1]
+        ])
     return J
 
-def forward_kinetic(Q):
 
-    Mat = forward_Mat(Q)
-    head = np.dot(Mat, L)  #2,1 先端の座標
+# Define the target position
+p_target = np.array([0.3, 0.5, 0.3])
 
-    var = Mat*np.dot(J2_1,L.T) # アダマール積 A*B
-    return var,head
+# Define the initial joint angles and DH parameters
+#a, alpha, d, theta
+theta = np.array([0., 0., 0.])
+L = np.array([0.5,0.5, 0.5])
+dh_params = np.array([
+    [0.0, 0.0, L[0], theta[0]],
+    [0.0, theta[1], L[1], 0.0],
+    [0.0, theta[2], L[2], 0.0]
+    ])
 
-def var2armp(var):
-    zp = np.array([[0,0]]).T
-#insert start point
-    armp = np.insert(var , 0, zp.T, axis = 1)
-#sums each point as if stair
-    for i in range(armp.shape[1]): #列の和i = i + (i-1)
-        if i==0:
-            pass
-        else:
-            armp[:, i:i+1] = armp[:, i:i+1] + armp[:, i-1:i]
-    return armp
-def write_plot(armp):
-    global count
-    #ax1.set_xlim(-5, 5)
-    ax1.set_aspect('equal')
-    ax1.plot(armp[0], armp[1], color=cm(count), marker='.',markersize=1,
-             markerfacecolor='blue',
-             markeredgecolor='blue')
+# Define the maximum number of iterations and the tolerance for convergence
+max_iterations = 1000
+tolerance = 1e-6
 
-    count = (count+1)%360
+def forward_kinematics(dh_params):
+    n = len(dh_params)
+    T = np.eye(4)
+    T_list = [T]
+    for i in range(n):
+        Ti = dh_to_matrix(dh_params[i])
+        T = T @ Ti
+        T_list.append(T)
+    return T_list
 
+error_list=[]
+sr_gain = 0.1
+sr_I = sr_gain * np.eye(3)
+def inverse_kinematics(p_target, dh_params, max_iterations, tolerance):
+    global theta
+    for i in range(max_iterations):
+        # Calculate the current position of the end-effector
+        p_current = forward_kinematics(dh_params)[-1][:3, 3]
+ 
+        # Calculate the error vector and check for convergence
+        error = p_target - p_current
 
-def inverse_kinetic(target_P, now_Q):
-    [target_x, target_z] = target_P
-    [q1, q2] = now_Q #now Q
+        # Save error         
+        error_abs = np.linalg.norm(error)
+        error_list.append(error_abs)
 
-    sr_lambda = 1
-    I = np.identity(2)
+        # If the distance from the target is small enough, loop ends
+        if error_abs < tolerance:
+            print("get no error params")
+            break
+        
+        # Calculate the Jacobian matrix
+        J = jacobi_matrix(theta,L)
 
-    for i in range(100):
-        var,P = forward_kinetic(now_Q)
-        Jacobi = Jacobian(now_Q) #2x2
+        # Calculate the inverse of the Jacobian matrix
+        J_inv = np.linalg.pinv(J + sr_I)
+        
+        # Calculate the joint velocities
+        v = np.dot(J_inv, error)
 
-        d_P = (target_P - P)
-        jacobi_inv =np.linalg.inv( Jacobi + (sr_lambda*I) )
-        d_Q = 0.1*np.dot(jacobi_inv, d_P)
+        # Update the joint angles
+        theta += 0.1 * v
+        
+        # Update the DH parameters
+        dh_params = np.array([
+            [0.0, 0.0, L[0], theta[0]],
+            [0.0, theta[1], L[1], 0.0],
+            [0.0, theta[2], L[2], 0.0]
+            ])
 
-        d_Q = d_Q
+    return theta,dh_params
 
-        now_Q = now_Q + d_Q
+# Save inital dh param
+start_dh_params = dh_params
 
+# Perform inverse kinematics
+theta,dh_params = inverse_kinematics(p_target, dh_params, max_iterations, tolerance)
 
-        #graph
-        test(now_Q)
-        [dx,dy]= np.ravel(d_P)
-        [dq1,dq2]= np.ravel(d_Q)
-        ax2_xdata.append(i+1)
-        ax2_ydata.append(np.linalg.det(Jacobi))
-        #ax2_ydata.append( np.sqrt(dx**2 + dy**2))
-        ax3_xdata.append(i+1)
-        ax3_ydata.append( dq1*180/np.pi)
-        ax4_xdata.append(i+1)
-        ax4_ydata.append( dq2*180/np.pi)
-    return now_Q
+# Print the final joint angles
+print("Final joint angles:{}".format(theta))
 
-def test(Q):
-    var,head = forward_kinetic(Q)
-    armp = var2armp(var)
-    #print(head == armp[:,-1].reshape(2,1))
-    write_plot(armp)
+# Create figure
+fig = plt.figure(figsize=(10,6))
+ax1 = fig.add_subplot(2, 2, 1, projection='3d')
+ax2 = fig.add_subplot(2, 2, 2)
+ax3 = fig.add_subplot(2, 2, 3, projection='3d')
 
+# graph1
+T_list = forward_kinematics(start_dh_params)
+for i in range(len(T_list)-1):
+    p1 = T_list[i][:3, 3]
+    p2 = T_list[i+1][:3, 3]
+    ax1.plot([p1[0], p2[0]], [p1[1], p2[1]], [p1[2], p2[2]], 'b')
+    ax1.plot(p1[0], p1[1], p1[2], 'b',marker='o')
+ax1.plot(p_target[0],p_target[1],p_target[2], 'r',marker='o')
 
-if __name__ == "__main__":
-    q1 = 0 *(np.pi/180)
-    q2 = 0  *(np.pi/180)
-    Q = np.array([[q1,q2]]).T
-    test(Q)
+# graph2
+ax2.plot(error_list)
 
-    target_P = np.array([[1,1]]).T
-    Q = inverse_kinetic(target_P, Q)
+# graph3
+T_list = forward_kinematics(dh_params)
+for i in range(len(T_list)-1):
+    p1 = T_list[i][:3, 3]
+    p2 = T_list[i+1][:3, 3]
+    ax3.plot([p1[0], p2[0]], [p1[1], p2[1]], [p1[2], p2[2]], 'b')
+    ax3.plot(p1[0], p1[1], p1[2], 'b',marker='o')
+ax3.plot(p_target[0],p_target[1],p_target[2], 'r',marker='o')
 
-    
+# Setting glaph
+ax1.set_title('Initial')
+ax1.set_xlabel('X')
+ax1.set_ylabel('Y')
+ax1.set_zlabel('Z')
+ax1.set_xlim(-1, 1)
+ax1.set_ylim(-1, 1)
+ax1.set_zlim(0, 2)
+ax1.grid()
 
+ax2.set_title('Distance to the target per loop of ik function')
+ax2.grid()
+ax2.set_xlabel('iteration')
 
-    """
-    d_Q = np.array([[85*(np.pi/180), 8*(np.pi/180)]])
-    Jacobi = Jacobian(Q) #2x2
-    Mat = forward_Mat(Q+d_Q)
-    var = Mat*np.dot(J2_1,L) # アダマール積 A*B
-    #d_var = Jacobi * np.dot(J2_1,d_q)# アダマール積 A*B
-    #var = var + d_var
-    d_head = np.dot(Jacobi, d_Q.T)
-    head = head + d_head
-    plt.plot(head[0], head[1], color='#30F010', marker='^',
-             markerfacecolor='blue',
-             markeredgecolor='blue')
-    armp = var2armp(var)
-    print(head == armp[:,-1].reshape(2,1))
-    write_plot(armp)
-    jacobi_inv =np.linalg.inv(Jacobi)
-    d_P = np.array([[-1,-1]])
-    d_P *=3
-    print(np.dot(jacobi_inv,d_P.T))
-    """
+ax3.set_title('Calculated')
+ax3.set_xlabel('X')
+ax3.set_ylabel('Y')
+ax3.set_zlabel('Z')
+ax3.set_xlim(-1, 1)
+ax3.set_ylim(-1, 1)
+ax3.set_zlim(0, 2)
+ax3.grid()
 
-
-
-    ax2.plot(ax2_xdata, ax2_ydata, color=(0,0,0), marker='.',markersize=1,
-             markerfacecolor='blue',
-             markeredgecolor='blue')
-    ax3.plot(ax3_xdata, ax3_ydata, color=(0,0,0), marker='.',markersize=1,
-             markerfacecolor='blue',
-             markeredgecolor='blue')
-    ax4.plot(ax4_xdata, ax4_ydata, color=(0,0,0), marker='.',markersize=1,
-             markerfacecolor='blue',
-             markeredgecolor='blue')
-
-    plt.tight_layout()
-    plt.savefig("result"+".png")
+plt.show()
