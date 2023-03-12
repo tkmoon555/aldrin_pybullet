@@ -17,9 +17,9 @@ useFixedBase = True
 flags = p.URDF_INITIALIZE_SAT_FEATURES
 print(os.path.dirname(__file__))
 ground_pos = [0,0,-0.625]
-ground = p.loadURDF("./world/ground.urdf", ground_pos, flags = flags, useFixedBase=useFixedBase)
+ground = p.loadURDF("../../../config/world/ground.urdf", ground_pos, flags = flags, useFixedBase=useFixedBase)
 robot_pos = [0,0,0.5]
-robot_id = p.loadURDF("./models/simplebot_v10/model.urdf", robot_pos)
+robot_id = p.loadURDF("../../../config/models/simplebot_v10/model.urdf", robot_pos)
 
 
 
