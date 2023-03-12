@@ -1,6 +1,6 @@
 # aldrin_pybullet
 
-###How to install
+### How to install
 ```
 sudo apt-get install python3-pip python3-pyqt5 
 pip install pybullet
