@@ -25,10 +25,7 @@ def jacobi_matrix(thetas, lengths):
     l1 , l2, l3 = lengths
     q1, q2, q3 = thetas
     J = np.array([
-        [1.0*l2*sin(q2)*cos(q1) + 1.0*l3*sin(q2)*cos(q1)*cos(q3) + 1.0*l3*sin(q3)*cos(q1)*cos(q2), 1.0*l2*sin(q1)*cos(q2) - 1.0*l3*sin(q1)*sin(q2)*sin(q3) + 1.0*l3*sin(q1)*cos(q2)*cos(q3), 0], 
-        [1.0*l2*sin(q1)*sin(q2) + 1.0*l3*sin(q1)*sin(q2)*cos(q3) + 1.0*l3*sin(q1)*sin(q3)*cos(q2), -1.0*l2*cos(q1)*cos(q2) + 1.0*l3*sin(q2)*sin(q3)*cos(q1) - 1.0*l3*cos(q1)*cos(q2)*cos(q3), 0], 
-        [0, -1.0*l2*sin(q2) - 1.0*l3*sin(q2)*cos(q3) - 1.0*l3*sin(q3)*cos(q2), 1]
-        ])
+[l2*sin(q2)*cos(q1) + l3*sin(q2)*cos(q1)*cos(q3) + l3*sin(q3)*cos(q1)*cos(q2), l2*sin(q1)*cos(q2) - l3*sin(q1)*sin(q2)*sin(q3) + l3*sin(q1)*cos(q2)*cos(q3), -l3*sin(q1)*sin(q2)*sin(q3) + l3*sin(q1)*cos(q2)*cos(q3)], [l2*sin(q1)*sin(q2) + l3*sin(q1)*sin(q2)*cos(q3) + l3*sin(q1)*sin(q3)*cos(q2), -l2*cos(q1)*cos(q2) + l3*sin(q2)*sin(q3)*cos(q1) - l3*cos(q1)*cos(q2)*cos(q3), l3*sin(q2)*sin(q3)*cos(q1) - l3*cos(q1)*cos(q2)*cos(q3)], [0, -l2*sin(q2) - l3*sin(q2)*cos(q3) - l3*sin(q3)*cos(q2), -l3*sin(q2)*cos(q3) - l3*sin(q3)*cos(q2)]    ])
     return J
 
 
@@ -85,7 +82,7 @@ def inverse_kinematics(p_target, dh_params, max_iterations, tolerance):
 
         # Calculate the inverse of the Jacobian matrix
         J_inv = np.linalg.pinv(J + sr_I)
-        
+        print(J)
         # Calculate the joint velocities
         v = np.dot(J_inv, error)
 

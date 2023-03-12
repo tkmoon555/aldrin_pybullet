@@ -25,12 +25,12 @@ set_foot_length(): ロボットの足の長さを設定する。
 set_hip_width(): ロボットの股関節の幅を設定します。
 set_max_joint_angle()：ロボットの股関節の角度を設定します。ロボットの関節が届く最大の角度を設定します。
 '''
-from abc import ABC, abstractmethod
+
 import pybullet as p
 
 
 
-class BipedModel(ABC):
+class BipedModel:
     def __init__(self, robot_id):
         self._motor_list = []
 
@@ -124,18 +124,15 @@ class JointModel:
 if __name__ == '__main__':
     import pybullet_data
     import time 
-    import os
- 
-    print("join(): " + os.path.join(os.path.abspath(os.path.dirname(__file__)), "*.urdf"))
 
     # Connect to the PyBullet physics server
     p.connect(p.GUI)  
     useFixedBase = True
     flags = p.URDF_INITIALIZE_SAT_FEATURES
     ground_pos = [0,0,-0.625]
-    ground = p.loadURDF("../../world/ground.urdf", ground_pos, flags = flags, useFixedBase=useFixedBase)
+    ground = p.loadURDF('../simulator/pybullet/world/ground.urdf', ground_pos, flags = flags, useFixedBase=useFixedBase)
     robot_pos = [0,0,0.5]
-    robot_id = p.loadURDF("../../models/simplebot_v10/model.urdf", robot_pos)
+    robot_id = p.loadURDF('../simulator/pybullet/models/simplebot_v10/model.urdf', robot_pos)
     p.setGravity(0, 0,-0.1)  # Set the gravity to -9.81 m/s^2 in the z-direction
     p.setTimeStep(1.0/240.0)   # Set the time step to 1/240 seconds
     p.setRealTimeSimulation(1)
