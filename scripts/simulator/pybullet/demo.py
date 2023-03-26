@@ -19,7 +19,7 @@ print(os.path.dirname(__file__))
 ground_pos = [0,0,-0.625]
 ground = p.loadURDF("../../../config/world/ground.urdf", ground_pos, flags = flags, useFixedBase=useFixedBase)
 robot_pos = [0,0,0.5]
-robot_id = p.loadURDF("../../../config/models/assy2_v2/model.urdf", robot_pos)
+robot_id = p.loadURDF("../../../config/models/simplebot_v10/model.urdf", robot_pos)
 
 p.setPhysicsEngineParameter(numSolverIterations=10)
 #p.changeDynamics(robot_id, -1, linearDamping=0, angularDamping=0)
