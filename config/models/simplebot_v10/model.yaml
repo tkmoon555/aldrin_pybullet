@@ -1,0 +1,122 @@
+robot:
+  arm_v4:1:
+    collision:
+      geometry: {}
+      origin:
+        rpy: 0.0 -1.5313421029312503e-16 0.0
+        xyz: 0.019999999999999993 0.005 -0.044
+    name: arm_v4:1
+    visual:
+      geometry: {}
+      origin:
+        rpy: 0.0 -1.5313421029312503e-16 0.0
+        xyz: 0.019999999999999993 0.005 -0.044
+  arm_v4:2:
+    collision:
+      geometry: {}
+      origin:
+        rpy: 0.0 1.5313421029312507e-16 0.0
+        xyz: -0.02 0.005 -0.044
+    name: arm_v4:2
+    visual:
+      geometry: {}
+      origin:
+        rpy: 0.0 1.5313421029312507e-16 0.0
+        xyz: -0.02 0.005 -0.044
+  arm_v4:3:
+    collision:
+      geometry: {}
+      origin:
+        rpy: 0.0 -1.0395456967976374e-15 0.0
+        xyz: 0.015000000000000045 0.005 -0.043999999999999984
+    name: arm_v4:3
+    visual:
+      geometry: {}
+      origin:
+        rpy: 0.0 -1.0395456967976374e-15 0.0
+        xyz: 0.015000000000000045 0.005 -0.043999999999999984
+  arm_v4:4:
+    collision:
+      geometry: {}
+      origin:
+        rpy: 0.0 9.62978591651075e-16 0.0
+        xyz: -0.01500000000000003 0.005 -0.043999999999999984
+    name: arm_v4:4
+    visual:
+      geometry: {}
+      origin:
+        rpy: 0.0 9.62978591651075e-16 0.0
+        xyz: -0.01500000000000003 0.005 -0.043999999999999984
+  body_v1:1:
+    collision:
+      geometry: {}
+      origin:
+        rpy: 0.0 -0.0 0.0
+        xyz: 0.0 0.0 0.0
+    name: body_v1:1
+    visual:
+      geometry: {}
+      origin:
+        rpy: 0.0 -0.0 0.0
+        xyz: 0.0 0.0 0.0
+  name: simplebot_v10
+  rev0:
+    axis:
+      xyz: -1.0 0.0 0.0
+    child: arm_v4:1
+    limit:
+      effort: '10'
+      lower: '-1.5707963267948966'
+      upper: '1.5707963267948966'
+      velocity: '10'
+    name: rev0
+    origin:
+      rpy: 0 0 0
+      xyz: 0.020000000000000007 0.0 0.01671866065705706
+    parent: body_v1:1
+    type: revolute
+  rev1:
+    axis:
+      xyz: 1.0 0.0 0.0
+    child: arm_v4:2
+    limit:
+      effort: '10'
+      lower: '-1.5707963267948966'
+      upper: '1.5707963267948966'
+      velocity: '10'
+    name: rev1
+    origin:
+      rpy: 0 0 0
+      xyz: -0.02 0.0 0.01671866065705706
+    parent: body_v1:1
+    type: revolute
+  rev2:
+    axis:
+      xyz: 1.0 0.0 6.125368411725003e-16
+    child: arm_v4:3
+    limit:
+      effort: '10'
+      lower: '-1.5707963267948966'
+      upper: '1.5707963267948966'
+      velocity: '10'
+    name: rev2
+    origin:
+      rpy: 0 0 0
+      xyz: 0.0 0.0 -0.088
+    parent: arm_v4:1
+    type: revolute
+  rev3:
+    axis:
+      xyz: -1.0 0.0 5.359697360259377e-16
+    child: arm_v4:4
+    limit:
+      effort: '10'
+      lower: '-1.5707963267948966'
+      upper: '1.5707963267948966'
+      velocity: '10'
+    name: rev3
+    origin:
+      rpy: 0 0 0
+      xyz: -1.3877787807814457e-17 0.0 -0.088
+    parent: arm_v4:2
+    type: revolute
