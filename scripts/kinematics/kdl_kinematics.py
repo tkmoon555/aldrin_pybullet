@@ -21,8 +21,10 @@ class KDLKinematics:
 
         final_frame = kdl.Frame()
 
+
         if self._kdl_fk.JntToCart(self._kdl_angles, final_frame, link_num) < 0: print('\033[31m' + 'Please check link_num of KDLKinematics.fk' +'\033[0m')
-        
+        print("***************")
+        print(final_frame)
         H = np.eye(4) #a homogeneous transformation matrix
         H[:3,:3] = np.array([[final_frame.M[0,0], final_frame.M[0,1], final_frame.M[0,2]],
                             [final_frame.M[1,0], final_frame.M[1,1], final_frame.M[1,2]],
@@ -75,16 +77,18 @@ if __name__ == '__main__':
     fig = plt.figure(figsize=(10,6))
     ax1 = fig.add_subplot(2, 2, 1, projection='3d')
     ax2 = fig.add_subplot(2, 2, 2, projection='3d')
-    ax3 = fig.add_subplot(2, 2, 3)
-
+    #ax3 = fig.add_subplot(2, 2, 3)
     T_list = [ kdl_kinematics.fk(init_angles,i) for i in range(kdl_kinematics.num_joints +1)]
+    print(kdl_kinematics.num_joints)
+
+
     for i in range(len(T_list)-1):
         p1 = T_list[i][:3, 3]
         p2 = T_list[i+1][:3, 3]
         ax1.plot([p1[0], p2[0]], [p1[1], p2[1]], [p1[2], p2[2]], 'b')
         ax1.plot(p1[0], p1[1], p1[2], 'b',marker='o')
     
-    target_pos = [0.02, 0.0, -0.07]
+    target_pos = [0.02, 0.005, -0.07]
     angles = kdl_kinematics.ik(target_pos)
     T_list = [ kdl_kinematics.fk(angles,i) for i in range(kdl_kinematics.num_joints +1)]
     for i in range(len(T_list)-1):
@@ -97,9 +101,7 @@ if __name__ == '__main__':
     ax1.set_xlabel('X')
     ax1.set_ylabel('Y')
     ax1.set_zlabel('Z')
-    ax1.set_xlim(-0.05, 0.05)
-    ax1.set_ylim(-0.05, 0.05)
-    ax1.set_zlim(-0.1, 0.1)
+
     ax1.grid()
 
     ax2.set_title('Calculated')

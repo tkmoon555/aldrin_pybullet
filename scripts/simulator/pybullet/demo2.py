@@ -37,7 +37,6 @@ p.setRealTimeSimulation(1)
 model = BipedModel(robot_urdf_path)
 print(model.COG())
 
-
 #for i in range(10000):  # Run the simulation for 1000 steps
 while(1):
     #print("*************************")
