@@ -1,7 +1,6 @@
 import pybullet as p
 import pybullet_data
 import time
-import matplotlib.pyplot as plt
 
 import sys
 import os
@@ -61,7 +60,16 @@ p.resetSimulation()
 while(p.isConnected()):
 
     p.stepSimulation()
-
+    x = time.time()
+    y = p.getJointState(robot_id, joint_ids[0])[0]
+    xdata.append(x)
+    ydata.append(y)
+    line.set_xdata(xdata)
+    line.set_ydata(ydata)
+    ax.relim()
+    ax.autoscale_view()
+    fig.canvas.draw()
+    fig.canvas.flush_events()
 
     pos, orn = p.getBasePositionAndOrientation(robot_id)  # Get the position and orientation of the robot's base link
     for i in range(len(param_ids)):
@@ -75,3 +83,4 @@ while(p.isConnected()):
     
     time.sleep(1./240.)
 p.disconnect()
+

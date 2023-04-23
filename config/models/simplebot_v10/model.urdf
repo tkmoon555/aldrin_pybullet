@@ -1,5 +1,14 @@
 <?xml version="1.0"?>
 <robot name="simplebot_v10">
+	<!--
+	<link name="world" />
+	<joint name="world_to_base_link=" type="fixed">
+		<parent link="world"/>
+		<child link="body_v1:1"/>
+	</joint>
+	-->
+
+	
 	<link name="body_v1:1">
 		<inertial>
 			<mass value="0.6270135399067726"/>

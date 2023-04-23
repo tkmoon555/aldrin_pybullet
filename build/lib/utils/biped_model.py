@@ -33,7 +33,8 @@ from pykdl_utils.kdl_parser import *
 import PyKDL as kdl
 
 
-class BipedKdlModel:
+
+class BipedModel:
     base_link = "body_v1:1"
     left_leg_link = "arm_v4:3"
     right_leg_link = "arm_v4:4"
@@ -44,22 +45,6 @@ class BipedKdlModel:
             self.tree = kdl_tree_from_urdf_model(urdf.URDF.from_xml_string(urdf_file.read()))
         print(self.tree)
 
-        self._left_leg_chain = kdl.Chain()
-        self.__set_tip_of_left_leg_chain()
-        
-        self._right_leg_chain = kdl.Chain()
-        self.__set_tip_of_right_leg_chain()
-
-        self._COG = kdl.Vector(0,0,0)
-
-    @property
-    def left_leg_chain(self):
-        return self._left_leg_chain
-    @property
-    def right_leg_chain(self):
-        return self._right_leg_chain
-    
-    def __set_tip_of_left_leg_chain(self):
         self._left_leg_chain = self.tree.getChain(self.base_link, self.left_leg_link)
         #segment = kdl.Segment("left_leg_tip",kdl.Joint(kdl.Joint.RotY),kdl.Frame(kdl.Vector(0,0,-0.1)))
         #segment = kdl.Segment(kdl.Joint(kdl.Joint("None")), kdl.Frame(kdl.Vector(0,0,-0.1)))     
@@ -72,8 +57,7 @@ class BipedKdlModel:
                                 kdl.Frame(kdl.Vector(0,0,-0.1)),\
                                     new_inertia)
         self._left_leg_chain.addSegment(segment)
-
-    def __set_tip_of_right_leg_chain(self):
+        
         self._right_leg_chain = self.tree.getChain(self.base_link, self.right_leg_link)
         mass = 0.0856
         com = kdl.Vector(0.015, 0., -0.044)
@@ -85,7 +69,19 @@ class BipedKdlModel:
                                     new_inertia)
         self._right_leg_chain.addSegment(segment)
 
-
+        #print(self._left_leg_chain)
+        #print("*************************")
+        #print(self._right_leg_chain)
+    @property
+    def left_leg_chain(self):
+        return self._left_leg_chain
+    @property
+    def right_leg_chain(self):
+        return self._right_leg_chain
+    
+    
+    def get_COG(self):
+        return (0,0,0)
 
 
 
@@ -106,9 +102,21 @@ class JointModel:
                                 force=torque)#, positionGain=0.0, velocityGain=0.0)
 
 '''
-class BipedModel(BipedKdlModel):
-    def __init__(self):
-        super().__init__()
+class Model(BipedModel):
+    def __init__(self, urdf_path):
+        super().__init__(urdf_path)
+
+    @property
+    def robot_id(self):
+        return robot_id
+    
+    @property
+    def param_ids(self):
+        return param_ids
+    
+    @property
+    def joint_ids(self):
+        return joint_ids
     
     def get_joint_states(self):
         pass
@@ -116,7 +124,7 @@ class BipedModel(BipedKdlModel):
     def apply_joint_efforts(self, efforts):
         # apply torque to motors.
         pass
-    
+
     def _calculate_inertia(self):
         # implementation details omitted
         pass
@@ -126,3 +134,68 @@ class BipedModel(BipedKdlModel):
         pass
     
 
+
+
+"""
+if __name__ == '__main__':
+    import time 
+
+    # Connect to the PyBullet physics server
+    p.connect(p.GUI)  
+    useFixedBase = True
+    flags = p.URDF_INITIALIZE_SAT_FEATURES
+    ground_pos = [0,0,-0.625]
+    ground = p.loadURDF('../../config/world/ground.urdf', ground_pos, flags = flags, useFixedBase=useFixedBase)
+    model = BipedModel()
+
+    robot_pos = [0,0,0.5]
+    robot_id = p.loadURDF(model.urdf_file, robot_pos)
+    p.setGravity(0, 0,-9.8)  # Set the gravity to -9.81 m/s^2 in the z-direction
+    p.setTimeStep(1.0/240.0)   # Set the time step to 1/240 seconds
+    p.setRealTimeSimulation(0)
+    p.setPhysicsEngineParameter(numSolverIterations=10)
+    p.changeDynamics(robot_id, -1, linearDamping=0, angularDamping=0)
+        # Set the torque of the left motor to 1 N-m
+    #left_motor_id = 0  # Replace with the actual ID of the left motor joint
+    #torque = 1.0
+    #p.setJointMotorControl2(robot_id, left_motor_id, p.TORQUE_CONTROL, force=torque)
+    
+    
+    joint_ids = []
+    param_ids = []
+    for j in range(p.getNumJoints(robot_id)):
+        p.changeDynamics(robot_id, j, linearDamping=0, angularDamping=0)
+        info = p.getJointInfo(robot_id, j)
+        jointName = info[1]
+        jointType = info[2]
+        jointLowerLimit = info[8]
+        jointUpperLimit = info[9]
+        if (jointType == p.JOINT_PRISMATIC or jointType == p.JOINT_REVOLUTE):
+            joint_ids.append(j)
+            param_ids.append(p.addUserDebugParameter(jointName.decode("utf-8"), jointLowerLimit, jointUpperLimit, 0))
+            print("joint ID : {}, Name : {}".format(j, jointName.decode("utf-8")))
+
+
+    import sys
+    import os
+    # Add the path of the directory containing the module to the system path
+    sys.path.append(os.path.abspath("../kinematics"))
+    from kdl_kinematics import KDLKinematics
+
+    while p.isConnected():
+        p.stepSimulation()
+        pos, orn = p.getBasePositionAndOrientation(robot_id)  # Get the position and orientation of the robot's base link
+
+        for i in range(len(param_ids)):
+            c = param_ids[i]
+            targetPos = p.readUserDebugParameter(c)
+            p.setJointMotorControl2(robot_id, joint_ids[i], p.POSITION_CONTROL, targetPos, force=5 * 240.)
+        
+        '''        
+        print("*************************")
+        print("Robot position:",  )
+        print("Robot orientation:", orn)
+        '''
+        time.sleep(1./240.)
+    p.disconnect()
+"""

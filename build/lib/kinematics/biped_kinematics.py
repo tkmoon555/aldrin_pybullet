@@ -50,7 +50,104 @@ class BipedKinematics:
     @property
     def dh_params(self):
         return self._dh_params.get_dh_params()
+    
+    
+    def forward_kinematics(self, angles):
+        self._dh_params.update_angle(angles)
+        n = len(self.dh_params)
+        T = np.eye(4)
+        T_list = [T]
+        for i in range(n):
+            Ti = self._dh_to_matrix(self.dh_params[i])
+            T = T @ Ti
+            T_list.append(T)
+        return T_list
+    
+    def inverse_kinematics(self, p_target, 
+                           max_iterations = 1000, 
+                           tolerance = 1e-6,
+                           save_param_request = False):
+        sr_gain = 0.1
+        sr_I = sr_gain * np.eye(len(self.dh_params))
+        angles = self._dh_params.get_joint_angles()
+        for i in range(max_iterations):
+            # Calculate the current position of the end-effector
+            p_current = self.forward_kinematics(angles)[-1][:3, 3]
+            # Calculate the error vector and check for convergence
+            error = p_target - p_current
+            # Distance to Target
+            error_abs = np.linalg.norm(error)
+            # Save error  
+            if save_param_request:
+                self.add_error_param(error_abs)
+            # If the distance from the target is small enough, loop ends
+            if error_abs < tolerance:
+                break
+            # Calculate the Jacobian matrix
+            J = self._jacobi_matrix()
+            # Calculate the inverse of the Jacobian matrix
+            J_inv = np.linalg.pinv(J + sr_I )
+            # Calculate the joint velocities
+            v = J_inv @ error
+            # Update the joint angles
+            angles +=  v
+            # Update the DH parameters
+            self._dh_params.update_angle(angles)        
+        if save_param_request:
+            params = self.saved_params
+            self.saved_params = {'trajectory':[]}
+            return angles, params
+        else:
+            return angles
 
+    def _dh_to_matrix(self,dh_params):
+        #Convert DH parameters to a homogeneous transformation matrix.
+        # 0_T_1 = Rx0 * Tx0 * Rz1 * Tz0
+        a, alpha, d, theta = dh_params
+        cos_theta = np.cos(theta)
+        sin_theta = np.sin(theta)
+        cos_alpha = np.cos(alpha)
+        sin_alpha = np.sin(alpha)
+        Ti = np.array([
+            [cos_theta, -sin_theta, 0, a],
+            [cos_alpha*sin_theta, cos_alpha*cos_theta, -sin_alpha, -d * sin_alpha],
+            [sin_alpha*sin_theta, sin_alpha*cos_theta, cos_alpha, d*cos_alpha],
+            [0, 0, 0, 1]
+        ])
+        return Ti
+    def _jacobi_matrix(self):
+        # This function should be changed to suit your purpose.
+        return self._dh_params.get_jacobian()
+
+
+class DHParams:
+    def __init__(self, angles, L):
+        self.__angles =  angles
+        self.lengths = L
+        self.update_angle(angles)
+        
+    def get_dh_params(self):
+        return self.__dh_params
+    def get_jacobian(self):
+        return self.__jacobian
+    def get_joint_angles(self):
+        return self.__angles
+    def update_angle(self, angles):
+        q1, q2, q3 = self.__angles =  angles
+        l1, l2, l3 = self.lengths
+        # define DH parameters for the robot arm
+        # a, alpha, d, theta
+        self.__dh_params = np.array([
+            [0., 0., l1, q1],
+            [0., q2, l2, 0.],
+            [0., q3, l3, 0.]
+        ])
+        self.__jacobian = np.array([
+            [l2*np.sin(q2)*np.cos(q1) + l3*np.sin(q2)*np.cos(q1)*np.cos(q3) + l3*np.sin(q3)*np.cos(q1)*np.cos(q2), l2*np.sin(q1)*np.cos(q2) - l3*np.sin(q1)*np.sin(q2)*np.sin(q3) + l3*np.sin(q1)*np.cos(q2)*np.cos(q3), -l3*np.sin(q1)*np.sin(q2)*np.sin(q3) + l3*np.sin(q1)*np.cos(q2)*np.cos(q3)], 
+            [l2*np.sin(q1)*np.sin(q2) + l3*np.sin(q1)*np.sin(q2)*np.cos(q3) + l3*np.sin(q1)*np.sin(q3)*np.cos(q2), -l2*np.cos(q1)*np.cos(q2) + l3*np.sin(q2)*np.sin(q3)*np.cos(q1) - l3*np.cos(q1)*np.cos(q2)*np.cos(q3), l3*np.sin(q2)*np.sin(q3)*np.cos(q1) - l3*np.cos(q1)*np.cos(q2)*np.cos(q3)], 
+            [0., -l2*np.sin(q2) - l3*np.sin(q2)*np.cos(q3) - l3*np.sin(q3)*np.cos(q2), -l3*np.sin(q2)*np.cos(q3) - l3*np.sin(q3)*np.cos(q2)]
+        ])
+        return self.__dh_params
 
 if __name__ == '__main__':
     import matplotlib.pyplot as plt

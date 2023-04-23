@@ -8,6 +8,7 @@
 """
 
 
+"""
 from pybullet_simulator import PyBulletSimulator
 from controller import RobotController
 
@@ -52,3 +53,21 @@ print("Final orientation: ", final_orientation)
 
 # Close the simulator
 simulator.close()
+"""
+
+import pybullet as p
+import pybullet_data
+import time
+import os 
+import sys
+
+
+#from biped_model import BipedModel
+
+from simulator.pybullet.simulation_pybullet import SimulationPybullet
+
+if __name__ == '__main__':
+    pkg_path = os.path.abspath('..')
+    sim = SimulationPybullet(pkg_path)
+
+    sim.run()

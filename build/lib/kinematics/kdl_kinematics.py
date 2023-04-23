@@ -35,7 +35,7 @@ class KDLKinematics:
 
         self._kdl_jac = kdl.ChainJntToJacSolver(self.chain)
         self._kdl_dyn = kdl.ChainDynParam(self.chain, kdl.Vector.Zero())
-    def forward_kinematics(self, joint_angles, link_num = -1):
+    def fk(self, joint_angles, link_num = -1):
         
         if self.num_joints != len(joint_angles):
             print('\033[31m Please number of length joint_angles:{}, chain joints:{} KDLKinematics.fk \033[0m'.format(joint_angles, self.num_joints))
@@ -62,7 +62,7 @@ class KDLKinematics:
             print('\033[31m' + 'Please check link_num of KDLKinematics.fk' +'\033[0m', fk_status)
             return H
     
-    def inverse_kinematics(self,position):
+    def ik(self,position):
         desireFrame = kdl.Frame(kdl.Vector(
             position[0],
             position[1],
@@ -94,10 +94,10 @@ if __name__ == '__main__':
     # Add the path of the directory containing the module to the system path
     sys.path.append(os.path.abspath("../utils"))
     #from kdl_parser_py.urdf import *
-    from biped_model import BipedKdlModel
-    model = BipedKdlModel()
+    from biped_model import BipedModel
+    model = BipedModel()
 
-
+    print(model.get_COG())
     #print(kdl_kinematics.fk([0,0],2))
     #print(kdl_kinematics.ik([0,0,0]))
     #print(kdl_kinematics.jacobian([np.pi,np.pi]))
