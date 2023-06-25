@@ -24,12 +24,12 @@ class KDLKinematics:
         else:
             print('joint limits no setting.')
 
-        if 0:
-            tolerance_position = 1e-5
+        if 1:
+            eps_position = 1e-2
+
             maxiter = 100
-            tolerance_joint_value = 1e-10
-            self._kdl_ik        = kdl.ChainIkSolverPos_LMA(self.chain,tolerance_position,maxiter,tolerance_joint_value)
-            
+            eps_joint = 1e-15
+            self._kdl_ik        = kdl.ChainIkSolverPos_LMA(self.chain,eps_position,maxiter,eps_joint)
           
 
         self.num_joints    = self.chain.getNrOfJoints()
@@ -77,11 +77,13 @@ class KDLKinematics:
         ik_status = self._kdl_ik.CartToJnt(self._kdl_angles, desireFrame, q_out)
 
         if ik_status >=0:
-            return np.array([q_out[i] for i in range(q_out.rows())])
+            #print(' _kdl_angles:{}, num_joints:{}\033[0m'.format(self._kdl_angles,self.num_joints))
+            return np.array([q_out[i] for i in range(q_out.rows())]) 
         else:
             print('\033[31m' + 'can not solve KDLKinematics.ik' +'\033[0m', ik_status)
             print('\033[31m comfirm joint_limit, _kdl_angles:{}, num_joints:{}\033[0m'.format(self._kdl_angles,self.num_joints))
-            return np.array([q_out[i] for i in range(q_out.rows())])
+            
+            return np.array([None for i in range(q_out.rows())])
 
         
 

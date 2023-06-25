@@ -6,7 +6,7 @@ class GaitPatternGenerator:
 class GaitPattern:
     COG_Z = 0.8 #m
     SUPPORT_PHASE_TIME = 0.8#second
-    def __init__(self, gravity):
+    def __init__(self, gravity, support_leg = 'left'):
         self.time_constant = np.sqrt(self.COG_Z/abs(gravity))
 
         self.gravity = gravity
@@ -14,7 +14,7 @@ class GaitPattern:
         self._C = np.cosh(self.SUPPORT_PHASE_TIME/self.time_constant)
         self._S = np.sinh(self.SUPPORT_PHASE_TIME/self.time_constant)
 
-        self._which_leg = -1
+        self.set_support_leg(support_leg)
 
         self._left_foot_position = [0.,0.,0.]
         self._right_foot_position = [0.,0.,0.]
@@ -61,7 +61,21 @@ class GaitPattern:
         
     def switch_support_leg(self):
         self._which_leg *= -1
-
+    def set_support_leg(self, support_leg):
+        if support_leg == 'left':
+            self._which_leg = 1
+        elif support_leg == 'right':
+            self._which_leg = -1
+        else:
+            print('Error: No match support leg')
+    def which_support_leg(self):
+        if self._which_leg == 1:
+            support_leg = 'left'
+        elif self._which_leg == -1:
+            support_leg = 'right'
+        else:
+            print('Error: No match support leg')
+        return support_leg
     def generate_gait_pattern(self, landing_position, cog_position, cog_velocity, step, next_step, dt=1e-3, trace= False):
         self.__init_stock_params()
 
@@ -123,10 +137,10 @@ if __name__ == '__main__':
 
     gp = GaitPattern(9.8)
     
-    step_params = [[0.25,0.25,0]]\
-    +[ [0.25,0.25,20/180*np.pi],
-      [0.25,0.25,40/180*np.pi],
-      [0.25,0.25,40/180*np.pi],
+    step_params = 10*[[0.,0.25,0]]\
+    +[ [0.15,0.25,20/180*np.pi],
+      [0.15,0.25,40/180*np.pi],
+      [0.15,0.25,40/180*np.pi],
       [0.25,0.25,40/180*np.pi],
       [0.25,0.25,40/180*np.pi],
       [0.25,0.25,40/180*np.pi],
@@ -177,15 +191,15 @@ if __name__ == '__main__':
     
     ax1.grid(color='r', linestyle='dotted', linewidth=1)
 
-    ax1.set_xlim(-2., 5.)
-    ax1.set_ylim(-2., 5.)
+    #ax1.set_xlim(-2., 5.)
+    #ax1.set_ylim(-2., 5.)
     ims = []  #ここに1ステップごとのグラフを格納
     for i in range(len(land_pos)):
         p = ax2.plot([row[0] for row in land_pos[:i]], [row[1] for row in land_pos[:i]], color = 'darkblue', marker = 'o', markersize = 10)+\
               ax2.plot([row[0] for row in reference_landing_pos[:i]],[row[1] for row in reference_landing_pos[:i]],'r*',markersize=10)
 
-        ax2.set_xlim(-2., 5.)
-        ax2.set_ylim(-2., 5.)
+        #ax2.set_xlim(-2., 5.)
+        #ax2.set_ylim(-2., 5.)
         ims.append(p)
 
     ani = animation.ArtistAnimation(fig, ims, interval=1000)  #ArtistAnimationでアニメーションを作成する。
