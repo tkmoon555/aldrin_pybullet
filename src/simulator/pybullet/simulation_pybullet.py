@@ -3,6 +3,7 @@ import numpy as np
 import pybullet as p
 import pybullet_data
 
+
 class SimulationPybullet:
     def __init__(self,robot_urdf_path):
 
@@ -24,7 +25,7 @@ class SimulationPybullet:
         useFixedBase = True
         flags = p.URDF_INITIALIZE_SAT_FEATURES
         ground_pos = [0,0,-0.625]
-        ground = p.loadURDF("./config/world/ground.urdf", ground_pos, flags = flags, useFixedBase=useFixedBase)
+        ground = p.loadURDF("../config/world/ground.urdf", ground_pos, flags = flags, useFixedBase=useFixedBase)
         robot_pos = [0,0,0.5]
         robot_id = p.loadURDF(self._robot_urdf_path, robot_pos,useFixedBase=1)
         joint_ids = []

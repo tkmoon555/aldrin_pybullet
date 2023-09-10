@@ -1,3 +1,5 @@
+#! /usr/bin/env python
+
 '''
 BipedModelクラスは、二足歩行ロボットの質量、寸法、関節制限などの物理的な特性や特徴を含んでいます。このクラスは biped_model.py ファイルで定義されています。
 
@@ -25,12 +27,11 @@ set_foot_length(): ロボットの足の長さを設定する。
 set_hip_width(): ロボットの股関節の幅を設定します。
 set_max_joint_angle()：ロボットの股関節の角度を設定します。ロボットの関節が届く最大の角度を設定します。
 '''
-
-
 import pybullet as p
 import urdf_parser_py.urdf as urdf
 from .pykdl_utils.kdl_parser import *
 import PyKDL as kdl
+from urdf_parser_py.urdf import Robot
 
 class BaseUrdf2KdlModel:
     base_link = None
@@ -39,9 +40,17 @@ class BaseUrdf2KdlModel:
     urdf_path = None
     def __init__(self):
         with open(self.urdf_path) as urdf_path:
-            self.tree = kdl_tree_from_urdf_model(urdf.URDF.from_xml_string(urdf_path.read()))
-        #print(self.tree)
+            #rrrr = urdf.URDF.from_xml_string(urdf_path.read())
+            robot = Robot.from_xml_string(urdf_path.read())
+            self.tree = kdl_tree_from_urdf_model(robot)
+        num_non_fixed_joints = 0
+        print(robot.joint_map.keys())
+        print(robot.link_map.keys())
 
+
+
+        #print(self.tree)
+        
         self._left_leg_chain = kdl.Chain()
         self._left_leg_chain = self.tree.getChain(self.base_link, self.left_leg_link)
         self._right_leg_chain = kdl.Chain()
@@ -62,11 +71,12 @@ class BlackBirdModel(BaseUrdf2KdlModel):
     base_link = "torso"
     left_leg_link = "l_foot"
     right_leg_link = "r_foot"
-    urdf_path = "./config/models/blackbird_urdf/urdf/blackbird.urdf"
+    urdf_path = "../config/models/blackbird_urdf/urdf/blackbird.urdf"
     def __init__(self,name):
         super().__init__()
         self.name = name
 
+        #child_segments = self.tree.getSegment(0)
 
 
 

@@ -90,9 +90,11 @@ def kdl_tree_from_urdf_model(urdf):
         if parent in urdf.child_map:
             for joint, child_name in urdf.child_map[parent]:
                 child = urdf.link_map[child_name]
+                
                 if child.inertial is not None:
                     kdl_inert = urdf_inertial_to_kdl_rbi(child.inertial)
                 else:
+                    print("***************")
                     kdl_inert = kdl.RigidBodyInertia()
                 kdl_jnt = urdf_joint_to_kdl_joint(urdf.joint_map[joint])
                 kdl_origin = urdf_pose_to_kdl_frame(urdf.joint_map[joint].origin)
